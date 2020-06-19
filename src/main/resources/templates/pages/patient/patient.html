@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>病人列表</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="/css/oksub.css">
+	<script type="text/javascript" src="/lib/loading/okLoading.js"></script>
+</head>
+<body>
+<div class="ok-body">
+	<!--模糊搜索区域-->
+	<div class="layui-row">
+		<h1 align="center">今日诊疗</h1>
+		<form class="layui-form layui-col-md12 ok-search">
+			<input class="layui-input" placeholder="姓名" autocomplete="off" name="name">
+			<button class="layui-btn" lay-submit="" lay-filter="search">
+				<i class="layui-icon">&#xe615;</i>
+			</button>
+		</form>
+	</div>
+	<!--数据表格-->
+	<table class="layui-hide" id="tableId" lay-filter="tableFilter"></table>
+</div>
+<!--js逻辑-->
+<script src="/lib/layui/layui.js"></script>
+<script>
+	layui.use(["element", "jquery", "table", "form", "laydate", "okLayer", "okUtils", "okMock"], function () {
+		let table = layui.table;
+		let form = layui.form;
+		let laydate = layui.laydate;
+		let okLayer = layui.okLayer;
+		let okUtils = layui.okUtils;
+		let okMock = layui.okMock;
+		let $ = layui.jquery;
+
+		okLoading.close($);
+		let userTable = table.render({
+			elem: '#tableId',
+			url: okMock.api.tondayPanList,
+			limit: 20,
+			page: true,
+			toolbar: true,
+			toolbar: "#toolbarTpl",
+			size: "lg",
+			cols: [
+					[
+				{field: "id", title: "编号", align: "center",sort: true},
+				{field: "name", title: "姓名",align: "center"},
+				{field: "sex", title: "性别",align: "center"},
+				{field: "age", title: "年龄",align: "center"},
+				{field: "zdiagnosis", title: "诊断类型", align: "center"},
+				{field: "tonfur", title: "舌苔", align: "center"},
+				{field: "pulse", title: "脉象", align: "center"},
+				{field: "dialetype", title: "辨证分型", align: "center"},
+				{field: "cercate", title: "证素", align: "center"},
+				{field: "rule", title: "治则治法", align: "center"},
+				{field: "prescription", title: "方剂", align: "center"},
+				{field: "time", title: "时间",align: "center"},
+				{title: "操作", height: 50,width: 100, align: "center", fixed: "right", templet: "#operationTpl"}
+			]
+			],
+			done: function (res, curr, count) {
+				console.info(res, curr, count);
+			}
+		});
+
+		form.on("submit(search)", function (data) {
+			userTable.reload({
+				where: data.field,
+				page: {curr: 1}
+			});
+			return false;
+		});
+
+		table.on("toolbar(tableFilter)", function (obj) {
+			switch (obj.event) {
+				case "add":
+					add();
+					break;
+			}
+		});
+
+		table.on("tool(tableFilter)", function (obj) {
+			let data = obj.data;
+			switch (obj.event) {
+				case "edit":
+					edit(data.id);
+					break;
+				case "del":
+					del(data.id);
+					break;
+			}
+		});
+
+		function add() {
+			okLayer.open("添加诊疗", "/tonpatient/add", "100%", "100%", null, function () {
+				userTable.reload();
+			})
+		}
+
+		function edit(id) {
+			okLayer.open("更新诊疗", "/tonpatient/edit?id="+id, "100%", "100%", function (layero) {
+				let iframeWin = window[layero.find("iframe")[0]["name"]];
+			}, function () {
+				userTable.reload();
+			})
+		}
+
+		function del(id) {
+			okLayer.confirm("确定要删除吗？", function () {
+				okUtils.ajax("/merecorddelete", "get", {idsStr: id}, true).done(function (response) {
+					console.log(response);
+					userTable.reload();
+					okUtils.tableSuccessMsg(response.msg);
+				}).fail(function (error) {
+					console.log(error)
+				});
+			})
+		}
+	})
+</script>
+<!-- 头工具栏模板 -->
+<script type="text/html" id="toolbarTpl">
+	<div class="layui-btn-container">
+		<button class="layui-btn layui-btn-sm" lay-event="add">添加诊疗</button>
+	</div>
+</script>
+<!-- 行工具栏模板 -->
+<script type="text/html" id="operationTpl">
+	<a href="javascript:" title="编辑" lay-event="edit"><i class="layui-icon">&#xe642;</i></a>
+	<a href="javascript:" title="删除" lay-event="del"><i class="layui-icon">&#xe640;</i></a>
+</script>
+</body>
+</html>

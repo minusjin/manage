@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>添加中药</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="/css/oksub.css">
+	<script type="text/javascript" src="/lib/loading/okLoading.js"></script>
+</head>
+<body>
+<div class="ok-body">
+	<!--form表单-->
+	<form class="layui-form layui-form-pane ok-form">
+		<div class="layui-form-item">
+			<label class="layui-form-label">药名</label>
+			<div class="layui-input-block">
+				<input type="text" name="drugname" placeholder="请输入药名" autocomplete="off" class="layui-input"
+				       lay-verify="required">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">功效</label>
+			<div class="layui-input-block">
+				<input type="text" name="efficacy" placeholder="请输入功效" autocomplete="off" class="layui-input"
+					  >
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">药味</label>
+			<div class="layui-input-block">
+				<input type="text" name="medprope" placeholder="请输入药性" autocomplete="off" class="layui-input"
+				>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">药性</label>
+			<div class="layui-input-block">
+				<input type="text" name="medtaste" placeholder="请输入药性" autocomplete="off" class="layui-input"
+					  >
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">归经</label>
+			<div class="layui-input-block">
+				<input type="text" name="categorize" placeholder="请输入归经" autocomplete="off" class="layui-input"
+					  >
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">库存(kg)</label>
+			<div class="layui-input-block">
+				<input type="text" name="amount" placeholder="请输入库存量" autocomplete="off" class="layui-input"
+					   lay-verify="required">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">价格(g/元)</label>
+			<div class="layui-input-block">
+				<input type="text" name="price" placeholder="请输入价格" autocomplete="off" class="layui-input"
+					   lay-verify="required">
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+				<button class="layui-btn" lay-submit lay-filter="addArticle">立即提交</button>
+				<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+			</div>
+		</div>
+	</form>
+</div>
+<!--js逻辑-->
+<script src="/lib/layui/layui.js"></script>
+<script>
+	layui.use(["form", "okUtils", "okLayer"], function () {
+		let form = layui.form;
+		let okUtils = layui.okUtils;
+		let okLayer = layui.okLayer;
+		okLoading.close();
+		form.on("submit(addArticle)", function (data) {
+			okUtils.ajax("/drugadd", "get", data.field, true).done(function (response) {
+				okLayer.greenTickMsg(response.msg, function () {
+					parent.layer.close(parent.layer.getFrameIndex(window.name));
+				});
+			}).fail(function (error) {
+				console.log(error)
+			});
+			return false;
+		});
+	});
+</script>
+</body>
+</html>

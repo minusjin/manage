@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="utf-8">
+	<title>医案详情</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="/css/oksub.css">
+	<script type="text/javascript" src="/lib/loading/okLoading.js"></script>
+	<style media="print">
+		@page {
+			size: auto;  /* auto is the initial value */
+			margin: 0mm; /* this affects the margin in the printer settings */
+		}
+	</style>
+</head>
+<body>
+<div class="ok-body">
+	<div align="right">
+		<button  type="button" class="layui-btn layui-btn-radius" id="smt">更新</button>
+		<button  type="button" class="layui-btn layui-btn-radius" id="print">打印</button>
+	</div>
+	<!--数据表单-->
+	<table class="layui-table"  id="tableId" >
+		<thead>
+		<thead>
+		<tr>
+			<th colspan="8">
+				<div align="center">处方</div>
+			</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td style="width: 12.5%;font-size: large">姓名</td>
+			<td style="width: 12.5%" contentEditable="true" id="name" th:text="${detail.getName()}"></td>
+			<td style="width: 12.5%;font-size: large">性别</td>
+			<td style="width: 12.5%" contentEditable="false">
+				<form class="layui-form layui-form-pane ok-form"  th:if="${detail.getSex()} eq '男'">
+					<input type="radio" name="sex" value="男" title="男" checked>
+					<input type="radio" name="sex" value="女" title="女">
+				</form>
+				<form class="layui-form layui-form-pane ok-form" th:if="${detail.getSex()} eq '女'">
+					<input type="radio" name="sex" value="男" title="男">
+					<input type="radio" name="sex" value="女" title="女" checked>
+				</form>
+			</td>
+			<td style="width: 12.5%;font-size: large">年龄</td>
+			<td style="width: 12.5%" contentEditable="true" id="age" th:text="${detail.getAge()}">××</td>
+			<td style="width: 12.5%;font-size: large">诊次</td>
+			<td style="width: 12.5%" contentEditable="true" id="frequ" th:text="${detail.getFrequ()}"></td>
+		</tr>
+		<tr>
+			<td rowspan="2" style="font-size: large">主诉</td>
+			<td rowspan="2" colspan="3" id="chcom" contentEditable="true" th:text="${detail.getChcom()}"></td>
+			<td rowspan="2" style="font-size: large">其它症状</td>
+			<td rowspan="2" colspan="3" id="symptom" contentEditable="true" th:text="${detail.getSymptom()}"></td>
+		</tr>
+		</tbody>
+		<tbody>
+		<tr>
+			<td style="font-size: large">舌苔</td>
+			<td contentEditable="false">
+				<div id="tonfur" class="xm-select-demo"></div>
+			</td>
+			<td style="font-size: large">脉象</td>
+			<td contentEditable="false">
+				<div id="pulse" class="xm-select-demo"></div>
+			</td>
+			<td style="font-size: large">辨证分型</td>
+			<td contentEditable="true" id="dialetype" th:text="${detail.getDialetype()}"></td>
+			<td style="font-size: large">证素</td>
+			<td contentEditable="true" id="cercate" th:text="${detail.getCercate()}"></td>
+		</tr>
+		<tr>
+			<td rowspan="2" style="font-size: large">中医诊断</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="zdiagnosis" th:text="${detail.getZdiagnosis()}"></td>
+			<td rowspan="2" style="font-size: large">西医诊断</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="xdiagnosis" th:text="${detail.getXdiagnosis()}"></td>
+		</tr>
+		</tbody>
+		<tbody>
+		<tr>
+			<td rowspan="2" style="font-size: large">治则治法</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="rule" th:text="${detail.getRule()}"></td>
+			<td style="font-size: large">方剂名</td>
+			<td colspan="3" contentEditable="true" id="prescription" th:text="${detail.getPrescription()}">
+			</td>
+		</tr>
+		<tr>
+			<td style="font-size: large">方剂总数</td>
+			<td colspan="3" contentEditable="true" id="count" th:text="${detail.getCount()}">10</td>
+		</tr>
+		<tr>
+			<td rowspan="4" colspan="1" style="font-size: large">药物组成</td>
+			<td rowspan="4" colspan="5" contentEditable="true" id="drugs" th:text="${detail.getDrugs()}">
+			</td>
+			<td rowspan="4" colspan="1" style="font-size: large">药物数量</td>
+			<td rowspan="4" colspan="1" contentEditable="false" id="drugcount">
+		</tr>
+		</tbody>
+	</table>
+</div>
+<!--js逻辑-->
+<script src="/lib/layui/layui.js"></script>
+<!-- 导入 jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- 导入 PrintArea -->
+<script src="/js/jQuery.print.js"></script>
+<!--导入多选框-->
+<script src="/js/xm-select.js"></script>
+<script th:inline="javascript">
+	//药品数量
+	setInterval(function () {
+		var drugs = $("#drugs").text();
+		if(drugs.length==0 || drugs.match(/^\s*$/)){
+			var drugcount= document.getElementById("drugcount");
+			drugcount.innerHTML='0';
+		}else{
+			if(drugs.charAt(drugs.length-1)==','){
+				drugs = drugs.replace(/-/g, ',');
+				var drugcount= document.getElementById("drugcount");
+				drugslist=drugs.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+				drugcount.innerHTML=drugslist.length-1
+			}else {
+				drugs=drugs+","
+				drugs = drugs.replace(/-/g, ',');
+				var drugcount= document.getElementById("drugcount");
+				drugslist=drugs.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+				drugcount.innerHTML=drugslist.length-1
+			}
+		}
+	},1000)
+
+	layui.use(['layer', 'jquery', 'okLayer', 'form', 'okUtils', 'upload', 'laydate', 'okAddlink'], function () {
+		var layer = layui.layer;
+		var form = layui.form;
+		var upload = layui.upload;
+		var $ = layui.jquery;
+		var laydate = layui.laydate;
+		var $form = $('form');
+		let okUtils = layui.okUtils;
+		let okLayer = layui.okLayer;
+	okLoading.close();
+	//保存打印
+	$(document).ready(function () {
+		// 绑定“打印”按钮的点击事件
+		$("#print").click(function () {
+			// 打印 设置属性
+			$("#tableId").print();
+		});
+
+		//舌苔脉象选择框
+		var oldtonfur=[[${detail.getTonfur()}]]
+		var oldtonfurs=oldtonfur.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+		var datas=[
+			{name: '黄',value: 0,selected: false},
+			{name: '白',value: 1,selected: false},
+			{name: '红',value: 2,selected: false},
+			{name: '燥',value: 3,selected: false},
+			{name: '薄',value: 4,selected: false},
+			{name: '腻',value: 5,selected: false},
+			{name: '绛',value: 6,selected: false},
+			{name: '无苔',value: 7,selected: false},
+			{name: '少苔',value: 8,selected: false},
+		]
+		var flag=0;
+		for (var i = 0; i < oldtonfurs.length; i++) {
+			for(var j=0;j<datas.length;j++){
+				if(oldtonfurs[i]==datas[j].name){
+					datas[j].selected=true;
+					flag=1;
+				}
+			}
+			if(flag==0){
+				if(oldtonfurs[i].replace(/(^s*)|(s*$)/g, "").length !=0)
+					datas.push({name: oldtonfurs[i],value: j+1,selected: true})
+			}
+			flag=0;
+		}
+
+		var tonfur = xmSelect.render({
+			el: '#tonfur',
+			//提示数据
+			tips:'舌苔',
+			searchTips: '搜索自动创建',
+			//开启搜索工具条
+			filterable: true,
+			paging: true,
+			pageSize: 5,
+			autoRow: true,
+			//搜索不存在创建条目
+			create: function(val, arr){
+				if(arr.length === 0){
+					return {
+						name: val,
+						value: val
+					}
+				}
+			},
+			//显示样式
+			model: {
+				label: {
+					type: 'block',
+					block: {
+						//是否显示删除图标
+						showIcon: false,
+					}
+				}
+			},
+			data: datas
+		})
+
+		var oldpulse=[[${detail.getPulse()}]]
+		var oldpulses=oldpulse.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+		var pulsedata=[
+			{name: '数',value: 0,selected: false},
+			{name: '细',value: 1,selected: false},
+			{name: '沉',value: 2,selected: false},
+			{name: '涩',value: 3,selected: false},
+			{name: '弦',value: 4,selected: false},
+			{name: '滑',value: 5,selected: false},
+			{name: '弱',value: 6,selected: false},
+			{name: '濡',value: 7,selected: false},
+		]
+		var flag=0;
+		for (var i = 0; i < oldpulses.length; i++) {
+			for(var j=0;j<pulsedata.length;j++){
+				if(oldpulses[i]==pulsedata[j].name){
+					pulsedata[j].selected=true;
+					flag=1;
+				}
+			}
+			if(flag==0){
+				if(oldpulses[i].replace(/(^s*)|(s*$)/g, "").length !=0)
+					pulsedata.push({name: oldpulses[i],value: j+1,selected: true})
+			}
+			flag=0;
+		}
+
+		var pulse=xmSelect.render({
+			el: '#pulse',
+			//提示数据
+			tips:'脉象',
+			searchTips: '搜索自动创建',
+			//开启搜索工具条
+			filterable: true,
+			paging: true,
+			pageSize: 5,
+			autoRow: true,
+			//搜索不存在创建条目
+			create: function(val, arr){
+				if(arr.length === 0){
+					return {
+						name: val,
+						value: val
+					}
+				}
+			},
+			//显示样式
+			model: {
+				label: {
+					type: 'block',
+					block: {
+						//是否显示删除图标
+						showIcon: false,
+					}
+				}
+			},
+			data: pulsedata
+		})
+
+
+		$("#smt").click(function () {
+			var id = [[${detail.getId()}]];
+			var name = $("#name").text();
+			var sex =  $("input[name='sex']:checked").val();
+			var age = $("#age").text();
+			var frequ = $("#frequ").text();
+			var chcom = $("#chcom").text();
+			var symptom = $("#symptom").text();
+			var zdiagnosis = $("#zdiagnosis").text();
+			var xdiagnosis = $("#xdiagnosis").text();
+			var tonfurcon=tonfur.getValue("nameStr");
+			var pulsecon = pulse.getValue("nameStr");
+			var dialetype = $("#dialetype").text();
+			var cercate = $("#cercate").text();
+			var rule = $("#rule").text();
+			var drugs = $("#drugs").text();
+			var count = $("#count").text();
+			var prescription = $("#prescription").text();
+			setTimeout(function () {
+				$.ajax({
+					type: 'get',
+					url: '/famrecordupdate?id='+id+'&name='+name+"&sex="+sex+"&age="+age+"&frequ="+frequ
+							+"&chcom="+chcom+"&symptom="+symptom+"&zdiagnosis="+zdiagnosis+"&xdiagnosis="+
+							xdiagnosis+"&tonfur="+tonfurcon+"&pulse="+pulsecon+"&dialetype="+dialetype+"&cercate="+cercate+
+							"&rule="+rule+"&drugs="+drugs+"&count="+count+"&prescription="+prescription,
+					dataType: 'json',
+					success: function (response) {
+						layer.msg(response.msg);
+						okLayer.greenTickMsg(response.msg, function () {
+							parent.layer.close(parent.layer.getFrameIndex(window.name));
+						})
+					},
+					error: function (error) {
+						layer.msg(response.msg);
+						console.log(error)
+					}
+				});
+			}, 2000);
+			return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+		})
+	});
+	})
+</script>
+</body>
+</html>

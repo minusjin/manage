@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>中药列表</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="/css/oksub.css">
+	<script type="text/javascript" src="/lib/loading/okLoading.js"></script>
+</head>
+<body>
+<div class="ok-body">
+	<!--模糊搜索区域-->
+	<div class="layui-row">
+		<form class="layui-form layui-col-md12 ok-search">
+			<input class="layui-input" placeholder="请输入药名" autocomplete="off" name="drugname">
+			<input class="layui-input" placeholder="请输入功效" autocomplete="off" name="efficacy">
+			<input class="layui-input" placeholder="请输入归经" autocomplete="off" name="categorize">
+			<button class="layui-btn" lay-submit="" lay-filter="search">
+				<i class="layui-icon layui-icon-search"></i>
+			</button>
+		</form>
+	</div>
+	<!--数据表格-->
+	<table class="layui-hide" id="tableId" lay-filter="tableFilter"></table>
+</div>
+<!--js逻辑-->
+<script src="/lib/layui/layui.js"></script>
+<script>
+	layui.use(["element", "table", "form", "laydate", "okLayer", "okUtils", "okMock"], function () {
+		let table = layui.table;
+		let form = layui.form;
+		let util = layui.util;
+		let laydate = layui.laydate;
+		let okLayer = layui.okLayer;
+		let okUtils = layui.okUtils;
+		let okMock = layui.okMock;
+		okLoading.close();
+		util.fixbar({});
+		var $ = layui.$;
+
+		let articleTable = table.render({
+			elem: "#tableId",
+			url: okMock.api.listDrug,
+			limit: 20,
+			page: true,
+			even: true,
+			toolbar: "#toolbarTpl",
+			size: "lg",
+			cols: [
+					[
+				{type: "checkbox", fixed: "left"},
+				{field: "id", title: "编号", sort: true},
+				{field: "drugname", title: "药物", edit: 'text'},
+				{field: "efficacy", title: "功效", edit: 'text'},
+				{field: "medprope", title: "药味", edit: 'text'},
+				{field: "medtaste", title: "药性", edit: 'text'},
+				{field: "categorize", title: "归经", edit: 'text'},
+				{field: "amount", title: "库存(kg)", edit: 'text'},
+				{field: "price", title: "价格(g/元)", edit: 'text'},
+				{title: "操作", width: 100, align: "center", fixed: "right", templet: "#operationTpl"}
+			]
+			],
+			done: function (res, curr, count) {
+				console.log(res, curr, count)
+			}
+		});
+		//单元格移动
+        $(document).on('keydown','.layui-table-edit',function (e) {
+        	var td=$(this).parent('td')
+			,tr=td.parent('tr')
+			,trs=tr.parent().parent().find('tr')
+			,tr_index=tr.index()
+			,td_index=td.index()
+			,td_last_index=tr.find('[data-edit="text"]:last').index()
+			,td_first_index=tr.find('[data-edit="text"]:first').index();
+        	switch (e.keyCode) {
+        		case 13:
+					setTimeout(function () {
+						$('.layui-table-edit').select()
+					},0)
+					break;
+				case 39:
+					td.nextAll('[data-edit="text"]:first').click();
+					if(td_index==td_last_index){
+						tr.next().find('td').eq(td_first_index).click();
+						if(tr_index==trs.length-1){
+							trs.eq(0).find('td').eq(td_first_index).click();
+						}
+					}
+					break;
+				case 37:
+					td.prevAll('[data-edit="text"]:first').click();
+					break;
+				case 38:
+					tr.prev().find('td').eq(td_index).click();
+					break;
+				case 40:
+					tr.next().find('td').eq(td_index).click();
+					break;
+			 }
+		})
+
+		form.on("submit(search)", function (data) {
+			articleTable.reload({
+				where: data.field,
+				page: {curr: 1}
+			});
+			return false;
+		});
+
+		table.on("toolbar(tableFilter)", function (obj) {
+			switch (obj.event) {
+				case "batchDel":
+					batchDel();
+					break;
+				case "add":
+					add();
+					break;
+			}
+		});
+
+		table.on("tool(tableFilter)", function (obj) {
+			let data = obj.data;
+			switch (obj.event) {
+				case "del":
+					del(data.id);
+					break;
+			}
+		});
+
+		function batchDel() {
+			okLayer.confirm("确定要批量删除吗？", function (index) {
+				layer.close(index);
+				var idsStr = okUtils.tableBatchCheck(table);
+				if (idsStr) {
+					okUtils.ajax("/drugdelete", "get", {idsStr: idsStr}, true).done(function (response) {
+						console.log(response);
+						articleTable.reload();
+						okUtils.tableSuccessMsg(response.msg);
+					}).fail(function (error) {
+						console.log(error)
+					});
+				}
+			});
+		}
+
+		function add() {
+			okLayer.open("添加药物", "/drug/add", "90%", "90%", null, function () {
+				articleTable.reload();
+			})
+		}
+
+		function del(id) {
+			okLayer.confirm("确定要删除吗？", function () {
+				okUtils.ajax("/drugdelete", "get", {idsStr: id}, true).done(function (response) {
+					console.log(response);
+					articleTable.reload();
+					okUtils.tableSuccessMsg(response.msg);
+				}).fail(function (error) {
+					console.log(error)
+				});
+			})
+		}
+
+		//监听单元格编辑
+		table.on('edit(tableFilter)', function (obj) {
+			var value = obj.value //得到修改后的值
+					, data = obj.data //得到所在行所有键值
+					, field = obj.field; //得到字段
+			okUtils.ajax("/drugupdate?id=" + data.id + "&key=" + field + "&value=" + value, "get", true).done(function (response) {
+				console.log(response);
+			}).fail(function (error) {
+				console.log(error)
+			});
+		})
+	})
+</script>
+<!-- 头工具栏模板 -->
+<script type="text/html" id="toolbarTpl">
+	<div class="layui-btn-container">
+		<button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="batchDel">批量删除</button>
+		<button class="layui-btn layui-btn-sm" lay-event="add">添加药物</button>
+	</div>
+</script>
+<!-- 行工具栏模板 -->
+<script type="text/html" id="operationTpl">
+	<a href="javascript:" title="删除" lay-event="del"><i class="layui-icon">&#xe640;</i></a>
+</script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="utf-8">
+	<title>医案详情</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="/css/oksub.css">
+	<script type="text/javascript" src="/lib/loading/okLoading.js"></script>
+	<style media="print">
+		@page {
+			size: auto;  /* auto is the initial value */
+			margin: 0mm; /* this affects the margin in the printer settings */
+		}
+	</style>
+</head>
+<body>
+<div class="ok-body">
+	<p th:if="${detail==null}">没有找到匹配中医诊断和辩证分型相关药方</p>
+	<!--数据表单-->
+	<table class="layui-table"  id="tableId" th:if="${detail!=null}">
+		<thead>
+		<thead>
+		<tr>
+			<th colspan="8">
+				<div align="center">处方</div>
+			</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td style="width: 12.5%;font-size: large">姓名</td>
+			<td style="width: 12.5%" contentEditable="true" id="name" th:text="${detail.getName()}"></td>
+			<td style="width: 12.5%;font-size: large">性别</td>
+			<td style="width: 12.5%" contentEditable="true"  th:text="${detail.getSex()}">
+			</td>
+			<td style="width: 12.5%;font-size: large">年龄</td>
+			<td style="width: 12.5%" contentEditable="true" id="age" th:text="${detail.getAge()}">××</td>
+			<td style="width: 12.5%;font-size: large">诊次</td>
+			<td style="width: 12.5%" contentEditable="true" id="frequ" th:text="${detail.getFrequ()}"></td>
+		</tr>
+		<tr>
+			<td rowspan="2" style="font-size: large">主诉</td>
+			<td rowspan="2" colspan="3" id="chcom" contentEditable="true" th:text="${detail.getChcom()}"></td>
+			<td rowspan="2" style="font-size: large">其它症状</td>
+			<td rowspan="2" colspan="3" id="symptom" contentEditable="true" th:text="${detail.getSymptom()}"></td>
+		</tr>
+		</tbody>
+		<tbody>
+		<tr>
+			<td style="font-size: large">舌苔</td>
+			<td contentEditable="true" th:text="${detail.getTonfur()}">
+			</td>
+			<td style="font-size: large">脉象</td>
+			<td contentEditable="true" th:text="${detail.getPulse()}">
+			</td>
+			<td style="font-size: large">辨证分型</td>
+			<td contentEditable="true" id="dialetype" th:text="${detail.getDialetype()}"></td>
+			<td style="font-size: large">证素</td>
+			<td contentEditable="true" id="cercate" th:text="${detail.getCercate()}"></td>
+		</tr>
+		<tr>
+			<td rowspan="2" style="font-size: large">中医诊断</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="zdiagnosis" th:text="${detail.getZdiagnosis()}"></td>
+			<td rowspan="2" style="font-size: large">西医诊断</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="xdiagnosis" th:text="${detail.getXdiagnosis()}"></td>
+		</tr>
+		</tbody>
+		<tbody>
+		<tr>
+			<td rowspan="2" style="font-size: large">治则治法</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="rule" th:text="${detail.getRule()}"></td>
+			<td style="font-size: large">方剂名</td>
+			<td colspan="3" contentEditable="true" id="prescription" th:text="${detail.getPrescription()}">
+			</td>
+		</tr>
+		<tr>
+			<td style="font-size: large">方剂总数</td>
+			<td colspan="3" contentEditable="true" id="count" th:text="${detail.getCount()}">10</td>
+		</tr>
+		<tr>
+			<td rowspan="4" colspan="1" style="font-size: large">药物组成</td>
+			<td rowspan="4" colspan="5" contentEditable="false" id="drugs" th:utext="${detail.getDrugs()}">
+			</td>
+			<td rowspan="4" colspan="1" style="font-size: large">药物数量</td>
+			<td rowspan="4" colspan="1" contentEditable="false" id="drugcount">
+		</tr>
+		</tbody>
+	</table>
+	<div id="demo6" align="center"></div>
+</div>
+<!--js逻辑-->
+<script src="/lib/layui/layui.js"></script>
+<!-- 导入 jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- 导入 PrintArea -->
+<script src="/js/jQuery.print.js">
+</script>
+<script th:inline="javascript">
+	//药品数量
+	setInterval(function () {
+		var drugs = $("#drugs").text();
+		if(drugs.length==0 || drugs.match(/^\s*$/)){
+			var drugcount= document.getElementById("drugcount");
+			drugcount.innerHTML='0';
+		}else{
+			if(drugs.charAt(drugs.length-1)==','){
+				drugs = drugs.replace(/-/g, ',');
+				var drugcount= document.getElementById("drugcount");
+				drugslist=drugs.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+				drugcount.innerHTML=drugslist.length-1
+			}else {
+				drugs=drugs+","
+				drugs = drugs.replace(/-/g, ',');
+				var drugcount= document.getElementById("drugcount");
+				drugslist=drugs.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+				drugcount.innerHTML=drugslist.length-1
+			}
+		}
+	},1000)
+
+	layui.use(['laypage', 'layer'], function(){
+		var laypage = layui.laypage
+				,layer = layui.layer;
+		var countnum = [[${countnum}]];
+		var pagenum = [[${pagenum}]];
+		okLoading.close();
+		//只显示上一页、下一页
+		laypage.render({
+			elem: 'demo6'
+			, count: countnum
+			, limit: 1
+			,curr:pagenum
+			,layout: ['count','prev', 'next']
+			,jump: function(obj, first){
+				if(!first){
+					var href = '/patient/compare?page=' + obj.curr;
+					window.location.href = href
+				}
+			}
+		});
+
+
+	})
+</script>
+</body>
+</html>

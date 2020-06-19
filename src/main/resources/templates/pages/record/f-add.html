@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>添加医案</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="/css/oksub.css">
+	<script type="text/javascript" src="/lib/loading/okLoading.js"></script>
+	<style media="print">
+		@page {
+			size: auto;  /* auto is the initial value */
+			margin: 0mm; /* this affects the margin in the printer settings */
+		}
+	</style>
+</head>
+<body>
+<div class="ok-body">
+	<div align="right">
+		<button  type="button" class="layui-btn layui-btn-radius" id="smt">提交</button>
+		<button  type="button" class="layui-btn layui-btn-radius" id="print">打印</button>
+	</div>
+	<!--数据表单-->
+	<table class="layui-table"  id="tableId" >
+		<thead>
+		<thead>
+		<tr>
+			<th colspan="8">
+				<div align="center">处方</div>
+			</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td style="width: 12.5%;font-size: large">姓名</td>
+			<td style="width: 12.5%" contentEditable="true" id="name"></td>
+			<td style="width: 12.5%;font-size: large">性别</td>
+			<td style="width: 12.5%" contentEditable="true">
+				<form class="layui-form layui-form-pane ok-form">
+					<input type="radio" name="sex" value="男" title="男">
+					<input type="radio" name="sex" value="女" title="女" checked>
+				</form>
+			</td>
+			<td style="width: 12.5%;font-size: large">年龄</td>
+			<td style="width: 12.5%" contentEditable="true" id="age"></td>
+			<td style="width: 12.5%;font-size: large">诊次</td>
+			<td style="width: 12.5%" contentEditable="true" id="frequ"></td>
+		</tr>
+		<tr>
+			<td rowspan="2" style="font-size: large">主诉</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="chcom"></td>
+			<td rowspan="2" style="font-size: large">其它症状</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="symptom"></td>
+		</tr>
+		</tbody>
+		<tbody>
+		<tr>
+			<td style="font-size: large">舌苔</td>
+			<td contentEditable="true">
+				<div id="tonfur" class="xm-select-demo"></div>
+			</td>
+			<td style="font-size: large">脉象</td>
+			<td contentEditable="true">
+				<div id="pulse" class="xm-select-demo"></div>
+			</td>
+			<td style="font-size: large">辨证分型</td>
+			<td contentEditable="true" id="dialetype"></td>
+			<td style="font-size: large">证素</td>
+			<td contentEditable="true" id="cercate"></td>
+		</tr>
+		<tr>
+			<td rowspan="2" style="font-size: large">中医诊断</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="zdiagnosis"></td>
+			<td rowspan="2" style="font-size: large">西医诊断</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="xdiagnosis"></td>
+		</tr>
+		</tbody>
+		<tbody>
+		<tr>
+			<td rowspan="2" style="font-size: large">治则治法</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="rule"></td>
+			<td style="font-size: large">方剂名</td>
+			<td colspan="3" contentEditable="true" id="prescription">
+			</td>
+		</tr>
+		<tr>
+			<td style="font-size: large">方剂总数</td>
+			<td colspan="3" contentEditable="true" id="count"></td>
+		</tr>
+		<tr>
+			<td rowspan="4" colspan="1" style="font-size: large">药物组成</td>
+			<td rowspan="4" colspan="5" contentEditable="true" id="drugs">
+			</td>
+			<td rowspan="4" colspan="1" style="font-size: large">药物数量</td>
+			<td rowspan="4" colspan="1" contentEditable="false" id="drugcount">
+		</tr>
+		</tbody>
+	</table>
+</div>
+<!--js逻辑-->
+<script src="/lib/layui/layui.js"></script>
+<!-- 导入 jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- 导入 PrintArea -->
+<script src="/js/jQuery.print.js"></script>
+<!--导入多选框-->
+<script src="/js/xm-select.js"></script>
+<script>
+	//药品数量
+	setInterval(function () {
+		var drugs = $("#drugs").text();
+		if(drugs.length==0 || drugs.match(/^\s*$/)){
+			var drugcount= document.getElementById("drugcount");
+			drugcount.innerHTML='0';
+		}else{
+			if(drugs.charAt(drugs.length-1)==','){
+				drugs = drugs.replace(/-/g, ',');
+				var drugcount= document.getElementById("drugcount");
+				drugslist=drugs.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+				drugcount.innerHTML=drugslist.length-1
+			}else {
+				drugs=drugs+","
+				drugs = drugs.replace(/-/g, ',');
+				var drugcount= document.getElementById("drugcount");
+				drugslist=drugs.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+				drugcount.innerHTML=drugslist.length-1
+			}
+		}
+	},1000)
+
+	layui.use(['layer', 'jquery', 'okLayer', 'form', 'okUtils', 'upload', 'laydate', 'okAddlink'], function () {
+		var layer = layui.layer;
+		var form = layui.form;
+		var upload = layui.upload;
+		var $ = layui.jquery;
+		var laydate = layui.laydate;
+		var $form = $('form');
+		let okUtils = layui.okUtils;
+		let okLayer = layui.okLayer;
+		okLoading.close();
+		$(document).ready(function () {
+			// 绑定“打印”按钮的点击事件
+			$("#print").click(function () {
+				// 打印 设置属性
+				$("#tableId").print();
+			});
+
+
+			var tonfur = xmSelect.render({
+				el: '#tonfur',
+				//提示数据
+				tips:'舌苔',
+				searchTips: '搜索自动创建',
+				//开启搜索工具条
+				filterable: true,
+				paging: true,
+				pageSize: 5,
+				autoRow: true,
+				//搜索不存在创建条目
+				create: function(val, arr){
+					if(arr.length === 0){
+						return {
+							name: val,
+							value: val
+						}
+					}
+				},
+				//显示样式
+				model: {
+					label: {
+						type: 'block',
+						block: {
+							//是否显示删除图标
+							showIcon: false,
+						}
+					}
+				},
+				data: [
+					{name: '黄',value: 0},
+					{name: '白',value: 1},
+					{name: '红',value: 2},
+					{name: '燥',value: 3},
+					{name: '薄',value: 4},
+					{name: '腻',value: 5},
+					{name: '绛',value: 6},
+					{name: '无苔',value: 7},
+					{name: '少苔',value: 8},
+				]
+			})
+			var pulse=xmSelect.render({
+				el: '#pulse',
+				//提示数据
+				tips:'脉象',
+				searchTips: '搜索自动创建',
+				//开启搜索工具条
+				filterable: true,
+				paging: true,
+				pageSize: 5,
+				autoRow: true,
+				//搜索不存在创建条目
+				create: function(val, arr){
+					if(arr.length === 0){
+						return {
+							name: val,
+							value: val
+						}
+					}
+				},
+				//显示样式
+				model: {
+					label: {
+						type: 'block',
+						block: {
+							//是否显示删除图标
+							showIcon: false,
+						}
+					}
+				},
+				data: [
+					{name: '数',value: 0},
+					{name: '细',value: 1},
+					{name: '沉',value: 2},
+					{name: '涩',value: 3},
+					{name: '弦',value: 4},
+					{name: '滑',value: 5},
+					{name: '弱',value: 6},
+					{name: '濡',value: 7},
+				]
+			})
+
+			$("#smt").click(function () {
+				var name = $("#name").text();
+				var sex = $("input[name='sex']:checked").val();
+				var age = $("#age").text();
+				var frequ = $("#frequ").text();
+				var chcom = $("#chcom").text();
+				var symptom = $("#symptom").text();
+				var zdiagnosis = $("#zdiagnosis").text();
+				var xdiagnosis = $("#xdiagnosis").text();
+				var tonfurcon=tonfur.getValue("nameStr");
+				var pulsecon = pulse.getValue("nameStr");
+				var dialetype = $("#dialetype").text();
+				var cercate = $("#cercate").text();
+				var rule = $("#rule").text();
+				var drugs = $("#drugs").text();
+				var count = $("#count").text();
+				var prescription = $("#prescription").text();
+				setTimeout(function () {
+					$.ajax({
+						type: 'get',
+						url: '/famrecordadd?name='+name+"&sex="+sex+"&age="+age+"&frequ="+frequ
+						+"&chcom="+chcom+"&symptom="+symptom+"&zdiagnosis="+zdiagnosis+"&xdiagnosis="+
+						xdiagnosis+"&tonfur="+tonfurcon+"&pulse="+pulsecon+"&dialetype="+dialetype+"&cercate="+cercate+
+						"&rule="+rule+"&drugs="+drugs+"&count="+count+"&prescription="+prescription,
+						dataType: 'json',
+						success: function (response) {
+							layer.msg(response.msg);
+							okLayer.greenTickMsg(response.msg, function () {
+								parent.layer.close(parent.layer.getFrameIndex(window.name));
+							})
+						},
+						error: function (error) {
+							layer.msg(response.msg);
+							console.log(error)
+						}
+					});
+				}, 2000);
+				return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+			})
+		});
+	});
+</script>
+</body>
+</html>

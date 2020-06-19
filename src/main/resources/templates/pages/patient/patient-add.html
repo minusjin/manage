@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>添加病人信息</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="/css/oksub.css">
+	<script type="text/javascript" src="/lib/loading/okLoading.js"></script>
+	<style media="print">
+		@page {
+			size: auto;  /* auto is the initial value */
+			margin: 0mm; /* this affects the margin in the printer settings */
+		}
+	</style>
+</head>
+<body>
+<div class="ok-body">
+	<div align="right">
+				<button data-method="offset" data-type="rb" class="layui-btn layui-btn-radius" id="compare">处方比对</button>
+				<button  type="button" class="layui-btn layui-btn-radius" id="print">保存打印</button>
+	</div>
+	<!--数据表单-->
+	<table class="layui-table"  id="table" >
+		<thead>
+		<thead>
+		<tr>
+			<th colspan="8">
+				<div align="center">处方</div>
+			</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td style="width: 12.5%;font-size: large">姓名</td>
+			<td style="width: 12.5%" contentEditable="true" id="name"></td>
+			<td style="width: 12.5%;font-size: large">性别</td>
+			<td style="width: 12.5%">
+				<form class="layui-form layui-form-pane ok-form">
+					<input type="radio" name="sex" value="男" title="男">
+					<input type="radio" name="sex" value="女" title="女" checked>
+				</form>
+			</td>
+			<td style="width: 12.5%;font-size: large">年龄</td>
+			<td style="width: 12.5%" contentEditable="true" id="age"></td>
+			<td style="width: 12.5%;font-size: large">诊次</td>
+			<td style="width: 12.5%" contentEditable="true" id="frequ"></td>
+		</tr>
+		<tr>
+			<td rowspan="2" style="font-size: large">主诉</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="chcom"></td>
+			<td rowspan="2" style="font-size: large">其它症状</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="symptom"></td>
+		</tr>
+		</tbody>
+		<tbody>
+		<tr>
+			<td style="font-size: large">舌苔</td>
+			<td contentEditable="false" >
+				<div id="tonfur" class="xm-select-demo"></div>
+			</td>
+			<td style="font-size: large">脉象</td>
+			<td contentEditable="false">
+				<div id="pulse" class="xm-select-demo"></div>
+			</td>
+			<td style="font-size: large">辨证分型</td>
+			<td contentEditable="true" id="dialetype"></td>
+			<td style="font-size: large">证素</td>
+			<td contentEditable="true" id="cercate"></td>
+		</tr>
+		<tr>
+			<td rowspan="2" style="font-size: large">中医诊断</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="zdiagnosis"></td>
+			<td rowspan="2" style="font-size: large">西医诊断</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="xdiagnosis"></td>
+		</tr>
+		</tbody>
+		<tbody>
+		<tr>
+			<td rowspan="2" style="font-size: large">治则治法</td>
+			<td rowspan="2" colspan="3" contentEditable="true" id="rule"></td>
+			<td style="font-size: large">方剂名</td>
+			<td colspan="3" contentEditable="true" id="prescription">
+			</td>
+		</tr>
+		<tr>
+			<td style="font-size: large">方剂总数</td>
+			<td colspan="3" contentEditable="true" id="count"></td>
+		</tr>
+		<tr>
+			<td rowspan="4" colspan="1" style="font-size: large">药物组成</td>
+			<td rowspan="4" colspan="5" contentEditable="true" id="drugs">
+			<td rowspan="4" colspan="1" style="font-size: large">药物数量</td>
+			<td rowspan="4" colspan="1" contentEditable="false" id="drugcount">
+			</td>
+		</tr>
+		</tbody>
+		<tbody>
+		<tr>
+			<td style="font-size: large">签名</td>
+			<td colspan="3" contentEditable="true" id="dockername"></td>
+			<td style="font-size: large">日期</td>
+			<td colspan="3" contentEditable="true" id="time">[[${#dates.format(new java.util.Date().getTime(), 'yyyy-MM-dd hh:mm:ss')}]]</td>
+			<!--<td>价格</td>
+			<td colspan="1" contentEditable="true" id="price"></td>-->
+		</tr>
+		</tbody>
+	</table>
+
+	<fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+		<legend align="center">药品检索</legend>
+	</fieldset>
+	<div class="layui-row">
+		<form class="layui-form layui-col-md12 ok-search">
+			<input class="layui-input" placeholder="请输入药名" autocomplete="off" name="drugname">
+			<input class="layui-input" placeholder="请输入功效" autocomplete="off" name="efficacy">
+			<input class="layui-input" placeholder="请输入归经" autocomplete="off" name="categorize">
+			<button class="layui-btn" lay-submit="" lay-filter="search">
+				<i class="layui-icon layui-icon-search"></i>
+			</button>
+		</form>
+	</div>
+	<!--数据表格-->
+	<table class="layui-hide" id="tableId" lay-filter="tableFilter"></table>
+
+</div>
+<!--js逻辑-->
+<script src="/lib/layui/layui.js"></script>
+<!-- 导入 jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- 导入 PrintArea -->
+<script src="/js/jQuery.print.js"></script>
+<!--导入多选框-->
+<script src="/js/xm-select.js"></script>
+<script>
+
+	layui.use(['layer', 'jquery', 'okLayer', 'form', 'okUtils', 'upload', 'laydate', 'okAddlink'], function () {
+		var layer = layui.layer;
+		var form = layui.form;
+		var upload = layui.upload;
+		var $ = layui.jquery;
+		var laydate = layui.laydate;
+		var $form = $('form');
+		let okUtils = layui.okUtils;
+		let okLayer = layui.okLayer;
+	    okLoading.close();
+	$(document).ready(function(){
+
+		var tonfur = xmSelect.render({
+			el: '#tonfur',
+			//提示数据
+			tips:'舌苔',
+			searchTips: '搜索自动创建',
+			//开启搜索工具条
+			filterable: true,
+			paging: true,
+			pageSize: 5,
+			autoRow: true,
+			//搜索不存在创建条目
+			create: function(val, arr){
+				if(arr.length === 0){
+					return {
+						name: val,
+						value: val
+					}
+				}
+			},
+			//显示样式
+			model: {
+				label: {
+					type: 'block',
+					block: {
+						//是否显示删除图标
+						showIcon: false,
+					}
+				}
+			},
+			data: [
+				{name: '黄',value: 0},
+				{name: '白',value: 1},
+				{name: '红',value: 2},
+				{name: '燥',value: 3},
+				{name: '薄',value: 4},
+				{name: '腻',value: 5},
+				{name: '绛',value: 6},
+				{name: '无苔',value: 7},
+				{name: '少苔',value: 8},
+			]
+		})
+		var pulse=xmSelect.render({
+			el: '#pulse',
+			//提示数据
+			tips:'脉象',
+			searchTips: '搜索自动创建',
+			//开启搜索工具条
+			filterable: true,
+			paging: true,
+			pageSize: 5,
+			autoRow: true,
+			//搜索不存在创建条目
+			create: function(val, arr){
+				if(arr.length === 0){
+					return {
+						name: val,
+						value: val
+					}
+				}
+			},
+			//显示样式
+			model: {
+				label: {
+					type: 'block',
+					block: {
+						//是否显示删除图标
+						showIcon: false,
+					}
+				}
+			},
+			data: [
+				{name: '数',value: 0},
+				{name: '细',value: 1},
+				{name: '沉',value: 2},
+				{name: '涩',value: 3},
+				{name: '弦',value: 4},
+				{name: '滑',value: 5},
+				{name: '弱',value: 6},
+				{name: '濡',value: 7},
+			]
+		})
+
+		//自动计算价格
+		/*$.ajax({
+			type: 'get',
+			url: '/drugprice',
+			dataType: 'json',
+			success: function (response) {
+				layer.msg(response.msg);
+				var priceinfo=response.priceinfo;
+				setInterval(function () {
+					var drugs = $("#drugs").text();
+					drugs = drugs.replace(/-/g, ',');
+					var price= document.getElementById("price");
+					var newprice=0;
+					drugslist=drugs.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+					var re1 = /(\d{1,3})+(?:\.\d+)?/g
+					var re2 = /[\u4e00-\u9fa5]{2,}/g
+					for (var i = 0; i < drugslist.length; i++) {
+						if (!drugslist[i].replace(/(^s*)|(s*$)/g, "").length ==0)
+						{
+							var drugname=drugslist[i].match(re2)
+							var drugscount=drugslist[i].match(re1)
+							$.each(priceinfo, function (index, item) {
+								//循环获取数据
+								priceinfo[index].drugname;
+								if(drugname==priceinfo[index].drugname){
+									var price = priceinfo[index].price;
+									newprice=parseFloat(drugscount)*parseFloat(price)+newprice;
+								}
+
+							});
+						}
+					}
+					price.innerHTML=newprice.toFixed(3)
+				},1000)
+			},
+			error: function (error) {
+				layer.msg(error.msg);
+				console.log(error)
+			}
+		});*/
+
+		//药品数量
+		setInterval(function () {
+			var drugs = $("#drugs").text();
+			if(drugs.length==0 || drugs.match(/^\s*$/)){
+				var drugcount= document.getElementById("drugcount");
+				drugcount.innerHTML='0';
+			}else{
+				if(drugs.charAt(drugs.length-1)==','){
+					drugs = drugs.replace(/-/g, ',');
+					var drugcount= document.getElementById("drugcount");
+					drugslist=drugs.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+					drugcount.innerHTML=drugslist.length-1
+				}else {
+					drugs=drugs+","
+					drugs = drugs.replace(/-/g, ',');
+					var drugcount= document.getElementById("drugcount");
+					drugslist=drugs.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+					drugcount.innerHTML=drugslist.length-1
+				}
+			}
+		},1000)
+
+		// 绑定“打印”按钮的点击事件
+		$("#print").click(function () {
+			// 打印 设置属性
+			$("#table").print();
+			var name = $("#name").text();
+			var sex = $("input[name='sex']:checked").val();
+			var age = $("#age").text();
+			var frequ = $("#frequ").text();
+			var chcom = $("#chcom").text();
+			var symptom = $("#symptom").text();
+			var zdiagnosis = $("#zdiagnosis").text();
+			var xdiagnosis = $("#xdiagnosis").text();
+			//var tonfur = $("#tonfur").text(); 获取舌苔值
+			var tonfurcon=tonfur.getValue("nameStr");
+			var pulsecon = pulse.getValue("nameStr");
+			var dialetype = $("#dialetype").text();
+			var cercate = $("#cercate").text();
+			var rule = $("#rule").text();
+			var drugs = $("#drugs").text();
+			var count = $("#count").text();
+			var prescription = $("#prescription").text();
+			var dockername=$("#dockername").text();
+			var time=$("#time").text();
+			var price=$("#price").text();
+			setTimeout(function () {
+				$.ajax({
+					type: 'get',
+					url: '/tonpatiend/add?name='+name+"&sex="+sex+"&age="+age+"&frequ="+frequ
+							+"&chcom="+chcom+"&symptom="+symptom+"&zdiagnosis="+zdiagnosis+"&xdiagnosis="+
+							xdiagnosis+"&tonfur="+tonfurcon+"&pulse="+pulsecon+"&dialetype="+dialetype+"&cercate="+cercate+
+							"&rule="+rule+"&drugs="+drugs+"&count="+count+"&prescription="+prescription+"&dockername="+
+							dockername+"&time="+time+"&price="+price,
+					dataType: 'json',
+					success: function (response) {
+						layer.msg(response.msg);
+						okLayer.greenTickMsg(response.msg, function () {
+							parent.layer.close(parent.layer.getFrameIndex(window.name));
+						})
+					},
+					error: function (error) {
+						layer.msg(response.msg);
+						console.log(error)
+					}
+				});
+			}, 2000);
+		});
+	})
+	})
+	//药品检索
+	layui.use(["element", "table", "form", "laydate", "okLayer", "okUtils", "okMock"], function () {
+		let table = layui.table;
+		let form = layui.form;
+		let util = layui.util;
+		let laydate = layui.laydate;
+		let okLayer = layui.okLayer;
+		let okUtils = layui.okUtils;
+		let okMock = layui.okMock;
+		okLoading.close();
+		util.fixbar({});
+
+		let articleTable = table.render({
+			elem: "#tableId",
+			url: okMock.api.listDrug,
+			limit: 10,
+			page: true,
+			even: true,
+			size: "lg",
+			cols: [
+					[
+				{field: "drugname", title: "药物"},
+				{field: "efficacy", title: "功效"},
+				{field: "medprope", title: "药味"},
+				{field: "medtaste", title: "药性"},
+				{field: "categorize", title: "归经"},
+				{field: "price", title: "单价"},
+				{field: "size", title: "用量(g)", edit: 'text'},
+			]
+			],
+			done: function (res, curr, count) {
+				console.log(res, curr, count)
+			}
+		});
+
+		form.on("submit(search)", function (data) {
+			articleTable.reload({
+				where: data.field,
+				page: {curr: 1}
+			});
+			return false;
+		});
+
+		//监听单元格编辑
+		table.on('edit(tableFilter)', function (obj) {
+			var data = obj.data;
+			var te = document.getElementById("drugs");
+			var drugs=$("#drugs").text().replace(/\s*/g,"")
+			drugs = drugs.replace(/-/g, ',');
+			drugslist=drugs.split(/[，。？、《》！～｀”“’：；｜－——＋＝（）×＆％￥＃＠,<>?"':;~`!@#$%^&*()+=_{}/()]/)
+			var re2 = /[\u4e00-\u9fa5]{2,}/g
+			var newdrugs=""
+			var flag=0
+			for (var i = 0; i < drugslist.length; i++) {
+				if (!drugslist[i].replace(/(^s*)|(s*$)/g, "").length ==0)
+				{
+					var drugname=drugslist[i].match(re2)
+					if(data.drugname==drugname){
+						//药品量为空
+						if(!parseFloat(data.size)==0){
+							newdrugs=newdrugs+drugname+" "+data.size+",";
+						}
+						flag=1;
+					}else {
+						newdrugs=newdrugs+drugslist[i]+","
+					}
+				}
+			}
+			//说明为新药品
+			if(flag==0){
+				if(!parseFloat(data.size)==0)
+				newdrugs=newdrugs+data.drugname+" "+data.size+",";
+			}
+			flag=0
+			te.innerHTML=newdrugs;
+		});
+	});
+
+	//处方对比弹出层
+	layui.use(["element", "table", "form", "laydate", "okLayer", "okUtils", "okMock"], function(){ //独立版的layer无需执行这一句
+		let table = layui.table;
+		let form = layui.form;
+		let util = layui.util;
+		let laydate = layui.laydate;
+		let okLayer = layui.okLayer;
+		let okUtils = layui.okUtils;
+		let okMock = layui.okMock;
+		okLoading.close();
+		var $ = layui.$;
+		//单元格移动
+		$(document).on('keydown','.layui-table-edit',function (e) {
+			var td=$(this).parent('td')
+					,tr=td.parent('tr')
+					,trs=tr.parent().parent().find('tr')
+					,tr_index=tr.index()
+					,td_index=td.index()
+					,td_last_index=tr.find('[data-edit="text"]:last').index()
+					,td_first_index=tr.find('[data-edit="text"]:first').index();
+			switch (e.keyCode) {
+				case 38:
+					tr.prev().find('td').eq(td_index).click();
+					break;
+				case 40:
+					tr.next().find('td').eq(td_index).click();
+					break;
+			}
+		})
+		//触发事件
+		var active = {
+			offset: function(othis){
+				var te = document.getElementById("drugs");
+				//后台实现高亮
+				okLayer.ldyopen("处方比对", "/tonpatient/compare?zdiagnosis="+$("#zdiagnosis").text()+"&dialetype="+$("#dialetype").text()+"&drugs="+$("#drugs").text(), "55%", "55%", function (layero) {
+					setInterval(function () {
+						$.get('/drugs/compare?drugs='+$("#drugs").text(), function (md) {
+									mds = md.split("-*-");
+									if(mds[1]=='1'){
+										if(mds[0].match("<font color='red'> ,</font>"))
+											te.innerHTML="";
+										//代表没有元素
+										else
+										te.innerHTML=mds[0];
+									}
+								}
+						);
+
+					},1000)
+					let iframeWin = window[layero.find("iframe")[0]["name"]];
+				}, function () {
+				})
+			}
+		};
+		$('#compare').on('click', function(){
+			var othis = $(this), method = othis.data('method');
+			active[method] ? active[method].call(this, othis) : '';
+		});
+
+	});
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+[
+  {
+    "title": "首页",
+    "href": "/index",
+    "fontFamily": "ok-icon",
+    "icon": "&#xe6bb;",
+    "spread": true,
+    "isCheck": true
+  },
+  {
+    "title": "病人诊疗",
+    "href": "/tonpatient/list",
+    "icon": "&#xe66f;",
+    "spread": false
+  },
+  {
+    "title": "诊疗记录",
+    "href": "/mdfile/list",
+    "fontFamily": "ok-icon",
+    "icon": "&#xe739;",
+    "spread": false
+  },
+  {
+    "title": "医案库",
+    "href": "/famouns/recordlist",
+    "icon": "&#xe705;",
+    "spread": false
+  },
+  {
+    "title": "中药库",
+    "href": "/drug/list",
+    "icon": "&#xe62e;",
+    "spread": false
+  },
+  {
+    "title": "中医交流",
+    "href": "",
+    "fontFamily": "ok-icon",
+    "icon": "&#xe6be;",
+    "spread": false,
+    "children": [
+      {
+        "title": "中医中药网",
+        "fontFamily": "ok-icon",
+        "href": "https://www.zhzyw.com/",
+        "icon": "&#xe627;",
+        "spread": false
+      },
+      {
+        "title": "好中医",
+        "fontFamily": "ok-icon",
+        "href": "http://www.welltcm.com/",
+        "icon": "&#xe627;",
+        "spread": false
+      },
+      {
+        "title": "古方中医网",
+        "fontFamily": "ok-icon",
+        "href": "http://www.cn939.com/",
+        "icon": "&#xe627;",
+        "spread": false
+      }
+    ]
+  }
+]

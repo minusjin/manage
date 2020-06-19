@@ -1,0 +1,14 @@
+server:
+  port: 3600
+spring:
+  thymeleaf:
+    cache: false
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://121.36.55.100:3306/medicalsysdb?serverTimezone=GMT&useUnicode=true&characterEncoding=UTF-8
+  mvc:
+    favicon:
+      enabled=false:

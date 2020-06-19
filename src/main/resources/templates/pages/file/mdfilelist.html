@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>诊疗记录</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="/css/oksub.css">
+	<script type="text/javascript" src="/lib/loading/okLoading.js"></script>
+</head>
+<body>
+<div class="ok-body">
+	<!--模糊搜索区域-->
+	<div class="layui-row">
+		<form class="layui-form layui-col-md12 ok-search">
+			<input class="layui-input" placeholder="诊疗日期" autocomplete="off" id="startTime" name="time">
+			<input class="layui-input" placeholder="病人姓名" autocomplete="off" name="name">
+			<button class="layui-btn" lay-submit="" lay-filter="search">
+				<i class="layui-icon layui-icon-search"></i>
+			</button>
+		</form>
+	</div>
+	<!--数据表格-->
+	<table class="layui-hide" id="tableId" lay-filter="tableFilter"></table>
+</div>
+<!--js逻辑-->
+<script src="/lib/layui/layui.js"></script>
+<script>
+	layui.use(["element", "table", "form", "laydate", "okLayer", "okUtils", "okMock"], function () {
+		let table = layui.table;
+		let form = layui.form;
+		let util = layui.util;
+		let laydate = layui.laydate;
+		let okLayer = layui.okLayer;
+		let okUtils = layui.okUtils;
+		let okMock = layui.okMock;
+		okLoading.close();
+		util.fixbar({});
+
+		laydate.render({elem: "#startTime", type: "datetime"});
+
+		let articleTable = table.render({
+			elem: "#tableId",
+			url: okMock.api.listMdfile,
+			limit: 20,
+			page: true,
+			even: true,
+			toolbar: "#toolbarTpl",
+			size: "lg",
+			cols: [
+					[
+				{type: "checkbox", fixed: "left"},
+				{field: "id", title: "编号",  align: "center",sort: true},
+				{field: "name", title: "姓名",align: "center"},
+				{field: "sex", title: "性别",align: "center"},
+				{field: "age", title: "年龄",align: "center"},
+				{field: "zdiagnosis", title: "诊断类型", align: "center"},
+				{field: "tonfur", title: "舌苔", align: "center"},
+				{field: "pulse", title: "脉象", align: "center"},
+				{field: "dialetype", title: "辨证分型", align: "center"},
+				{field: "cercate", title: "证素", align: "center"},
+				{field: "rule", title: "治则治法", align: "center"},
+				{field: "prescription", title: "方剂", align: "center"},
+				{field: "time", title: "时间",align: "center"},
+				{title: "操作", width: 100, align: "center", fixed: "right", templet: "#operationTpl"}
+			]
+			],
+			done: function (res, curr, count) {
+				console.log(res, curr, count)
+			}
+		});
+
+		form.on("submit(search)", function (data) {
+			articleTable.reload({
+				where: data.field,
+				page: {curr: 1}
+			});
+			return false;
+		});
+
+		table.on("toolbar(tableFilter)", function (obj) {
+			switch (obj.event) {
+				case "batchDel":
+					batchDel();
+					break;
+			}
+		});
+
+		table.on("tool(tableFilter)", function (obj) {
+			let data = obj.data;
+			switch (obj.event) {
+				case "edit":
+					edit(data.id);
+					break;
+				case "del":
+					del(data.id);
+					break;
+			}
+		});
+
+		function batchDel() {
+			okLayer.confirm("确定要批量删除吗？", function (index) {
+				layer.close(index);
+				var idsStr = okUtils.tableBatchCheck(table);
+				if (idsStr) {
+					okUtils.ajax("/merecorddelete", "get", {idsStr: idsStr}, true).done(function (response) {
+						console.log(response);
+						articleTable.reload();
+						okUtils.tableSuccessMsg(response.msg);
+					}).fail(function (error) {
+						console.log(error)
+					});
+				}
+			});
+		}
+
+		function edit(id) {
+			okLayer.open("查看档案", "/mdfile/detail?id=" + id, "90%", "90%", null, function () {
+				articleTable.reload();
+			})
+		}
+		function del(id) {
+			okLayer.confirm("确定要删除吗？", function () {
+				okUtils.ajax("/merecorddelete", "get", {idsStr: id}, true).done(function (response) {
+					console.log(response);
+					articleTable.reload();
+					okUtils.tableSuccessMsg(response.msg);
+				}).fail(function (error) {
+					console.log(error)
+				});
+			})
+		}
+
+	})
+</script>
+<!-- 头工具栏模板 -->
+<script type="text/html" id="toolbarTpl">
+	<div class="layui-btn-container">
+		<button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="batchDel">批量删除</button>
+	</div>
+</script>
+<!-- 行工具栏模板 -->
+<script type="text/html" id="operationTpl">
+	<a href="javascript:" title="查看" lay-event="edit"><i class="ok-icon">&#xe7b4;</i></a>
+	<a href="javascript:" title="删除" lay-event="del"><i class="layui-icon">&#xe640;</i></a>
+</script>
+</body>
+</html>
